@@ -84,7 +84,7 @@ async_queue_pop_unlocked(async_queue_t *queue)
 
 		assert(queue->cond != NULL);
 		assert(queue->mutex != NULL);
-		result = pthread_cond_wait(queue->cond, queue->mutex);
+		result = pthread_cond_wait(queue->cond, queue->mutex);		
 		if (result != 0)
 			fprintf(stderr, "file %s: line %d (%s): error '%d' during '%s'",
 				__FILE__, __LINE__, __FUNCTION__, result, "pthread_cond_wait");
