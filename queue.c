@@ -42,13 +42,16 @@ list_insert_head(list_t *list, void *data)
 {
 	list_t *new_list = list_alloc();
 
+	if (new_list == NULL)
+		return NULL;
+	
 	new_list->data = data;
 	new_list->next = list;
 	new_list->prev = NULL;
 
 	if (list)
 		list->prev = new_list;
-
+	
 	return new_list;
 }
 
@@ -56,8 +59,11 @@ list_insert_head(list_t *list, void *data)
 list_t *
 list_insert_tail(list_t *list, void *data)
 {
+	list_t *last;	
 	list_t *new_list = list_alloc();
-	list_t *last;
+
+	if (new_list == NULL)
+		return NULL;
 
 	new_list->data = data;
 	new_list->next = NULL;
