@@ -17,7 +17,7 @@ extern "C" {
 typedef struct _async_queue async_queue_t;
 struct _async_queue
 {
-	queue_t			queue;
+	queue_t			*queue;
 	pthread_mutex_t *mutex;
 	pthread_cond_t 	*cond;
 };
@@ -26,6 +26,8 @@ struct _async_queue
 async_queue_t *async_queue_new(void);
 void async_queue_push(async_queue_t *queue, void *data);
 void *async_queue_pop(async_queue_t *queue);
+void async_queue_foreach(async_queue_t *queue, func_visit_custom func, void *data);
+void async_queue_destroy(async_queue_t *queue);
 
 #ifdef __cplusplus
 }

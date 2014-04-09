@@ -16,11 +16,18 @@ async_queue_new( void )
 	async_queue = (async_queue_t *)calloc(1, sizeof(async_queue_t));
 	if (async_queue == NULL)
 		return NULL;
-		
-	queue_init(&async_queue->queue);
+	
+	async_queue->queue = (queue_t *)queue_new();
+	if (async_queue->queue == NULL)
+	{
+		free(async_queue);
+		return NULL;
+	}
+	
 	async_queue->mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
 	if (async_queue->mutex == NULL)
 	{
+		free(async_queue->queue);
 		free(async_queue);
 		return NULL;
 	}
@@ -28,6 +35,7 @@ async_queue_new( void )
 	if (pthread_mutex_init(async_queue->mutex, NULL) != 0)
 	{
 		free(async_queue->mutex);
+		free(async_queue->queue);
 		free(async_queue);
 		return NULL;
 	}
@@ -36,6 +44,7 @@ async_queue_new( void )
 	if (async_queue->cond == NULL)
 	{
 		free(async_queue->mutex);
+		free(async_queue->queue);
 		free(async_queue);
 		return NULL;
 	}
@@ -44,6 +53,7 @@ async_queue_new( void )
 	{
 		free(async_queue->cond);
 		free(async_queue->mutex);
+		free(async_queue->queue);
 		free(async_queue);
 		return NULL;		
 	}
@@ -51,12 +61,28 @@ async_queue_new( void )
 	return async_queue;
 }
 
+void
+async_queue_destroy(async_queue_t *queue)
+{
+	assert(queue);
+	assert(queue->mutex);
+	assert(queue->cond);
+	
+	pthread_mutex_lock(queue->mutex);
+	queue_free(queue->queue);
+	pthread_mutex_unlock(queue->mutex);
+	
+	free(queue->cond);
+	free(queue->mutex);	
+	free(queue);
+}
+
 static void
-j_async_queue_push_unlocked(async_queue_t *queue, void *data)
+async_queue_push_unlocked(async_queue_t *queue, void *data)
 {
 	assert(queue != NULL && data != NULL);
 
-	queue_push_tail(&queue->queue, data);
+	queue_push_tail(queue->queue, data);
 	pthread_cond_signal(queue->cond);
 }
 
@@ -64,8 +90,9 @@ void
 async_queue_push(async_queue_t *queue, void *data)
 {
 	assert(queue != NULL);
+	assert(queue->mutex != NULL);
 
-	pthread_mutex_lock (queue->mutex);
+	pthread_mutex_lock(queue->mutex);
 	async_queue_push_unlocked(queue, data);
 	pthread_mutex_unlock(queue->mutex);
 }
@@ -78,12 +105,11 @@ async_queue_pop_unlocked(async_queue_t *queue)
 
 	for (;;)
 	{
-		data = queue_pop_head(&queue->queue);
+		data = queue_pop_head(queue->queue);
 		if (data)
 			return data;
 
 		assert(queue->cond != NULL);
-		assert(queue->mutex != NULL);
 		result = pthread_cond_wait(queue->cond, queue->mutex);		
 		if (result != 0)
 			fprintf(stderr, "file %s: line %d (%s): error '%d' during '%s'",
@@ -92,7 +118,6 @@ async_queue_pop_unlocked(async_queue_t *queue)
 
 	return NULL;
 }
-
 
 void *
 async_queue_pop(async_queue_t *queue)
@@ -105,4 +130,14 @@ async_queue_pop(async_queue_t *queue)
 	pthread_mutex_unlock(queue->mutex);
 
 	return retval;
+}
+
+void
+async_queue_foreach(async_queue_t *queue, func_visit_custom func, void *data)
+{
+	assert(queue != NULL);
+	
+	pthread_mutex_lock(queue->mutex);
+	queue_foreach(queue->queue, func, data);
+	pthread_mutex_unlock(queue->mutex);
 }
