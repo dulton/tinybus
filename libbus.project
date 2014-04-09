@@ -14,6 +14,15 @@
 		"buildType":	"",
 		"arguments":	[],
 		"parentProject":	""
+	}, {
+		"name":	"Release",
+		"enabled":	false,
+		"buildDirectory":	"build",
+		"sourceDirectory":	"$(ProjectPath)",
+		"generator":	"",
+		"buildType":	"",
+		"arguments":	[],
+		"parentProject":	""
 	}]]]>
     </Plugin>
   </Plugins>
@@ -28,6 +37,7 @@
     <File Name="tinybus.h"/>
     <File Name="queue.h"/>
     <File Name="asyncqueue.h"/>
+    <File Name="atomic.h"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>
@@ -43,6 +53,7 @@
       <Compiler Options="-g" C_Options="-g" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" UseDifferentPCHFlags="no" PCHFlags="">
         <IncludePath Value="."/>
         <IncludePath Value="./linux"/>
+        <Preprocessor Value="_WINDOWS_"/>
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
