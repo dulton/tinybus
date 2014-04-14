@@ -73,7 +73,8 @@ ARFLAGS = cru
 libtinybus_a_AR = $(AR) $(ARFLAGS)
 libtinybus_a_LIBADD =
 am_libtinybus_a_OBJECTS = libtinybus_a-asyncqueue.$(OBJEXT) \
-	libtinybus_a-queue.$(OBJEXT) libtinybus_a-tinybus.$(OBJEXT)
+	libtinybus_a-queue.$(OBJEXT) libtinybus_a-tinybus.$(OBJEXT) \
+	libtinybus_a-trace.$(OBJEXT)
 libtinybus_a_OBJECTS = $(am_libtinybus_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -165,7 +166,7 @@ mandir = ${datarootdir}/man
 mkdir_p = /bin/mkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /home/zhangsy/usr/x86/debug/tinybus
+prefix = /home/zhangsy/usr/x86/debug
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -178,7 +179,7 @@ top_builddir = ..
 top_srcdir = ..
 AUTOMAKE_OPTIONS = foreign
 lib_LIBRARIES = libtinybus.a
-libtinybus_a_SOURCES = asyncqueue.c queue.c tinybus.c
+libtinybus_a_SOURCES = asyncqueue.c queue.c tinybus.c trace.c
 #libtinybus_a_LIBADD=libpthread.a
 libtinybus_a_LIBFLAGS = -shared
 libtinybus_a_CFLAGS = -fPIC
@@ -265,6 +266,7 @@ distclean-compile:
 include ./$(DEPDIR)/libtinybus_a-asyncqueue.Po
 include ./$(DEPDIR)/libtinybus_a-queue.Po
 include ./$(DEPDIR)/libtinybus_a-tinybus.Po
+include ./$(DEPDIR)/libtinybus_a-trace.Po
 
 .c.o:
 	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -321,6 +323,20 @@ libtinybus_a-tinybus.obj: tinybus.c
 #	source='tinybus.c' object='libtinybus_a-tinybus.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtinybus_a_CFLAGS) $(CFLAGS) -c -o libtinybus_a-tinybus.obj `if test -f 'tinybus.c'; then $(CYGPATH_W) 'tinybus.c'; else $(CYGPATH_W) '$(srcdir)/tinybus.c'; fi`
+
+libtinybus_a-trace.o: trace.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtinybus_a_CFLAGS) $(CFLAGS) -MT libtinybus_a-trace.o -MD -MP -MF $(DEPDIR)/libtinybus_a-trace.Tpo -c -o libtinybus_a-trace.o `test -f 'trace.c' || echo '$(srcdir)/'`trace.c
+	$(am__mv) $(DEPDIR)/libtinybus_a-trace.Tpo $(DEPDIR)/libtinybus_a-trace.Po
+#	source='trace.c' object='libtinybus_a-trace.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtinybus_a_CFLAGS) $(CFLAGS) -c -o libtinybus_a-trace.o `test -f 'trace.c' || echo '$(srcdir)/'`trace.c
+
+libtinybus_a-trace.obj: trace.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtinybus_a_CFLAGS) $(CFLAGS) -MT libtinybus_a-trace.obj -MD -MP -MF $(DEPDIR)/libtinybus_a-trace.Tpo -c -o libtinybus_a-trace.obj `if test -f 'trace.c'; then $(CYGPATH_W) 'trace.c'; else $(CYGPATH_W) '$(srcdir)/trace.c'; fi`
+	$(am__mv) $(DEPDIR)/libtinybus_a-trace.Tpo $(DEPDIR)/libtinybus_a-trace.Po
+#	source='trace.c' object='libtinybus_a-trace.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtinybus_a_CFLAGS) $(CFLAGS) -c -o libtinybus_a-trace.obj `if test -f 'trace.c'; then $(CYGPATH_W) 'trace.c'; else $(CYGPATH_W) '$(srcdir)/trace.c'; fi`
 install-tinybusincludeHEADERS: $(tinybusinclude_HEADERS)
 	@$(NORMAL_INSTALL)
 	test -z "$(tinybusincludedir)" || $(MKDIR_P) "$(DESTDIR)$(tinybusincludedir)"

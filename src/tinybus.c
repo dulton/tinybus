@@ -9,12 +9,13 @@
 #include <string.h>
 #include <netinet/in.h>
 #include "tinybus.h"
+#include "trace.h"
 
 #define tiny_bus_print_err(err, name) \
 do {\
 	int error = (err); 							\
 	if (error)	 		 		 			\
-		fprintf(stderr, "file %s: line %d (%s): error '%d' during '%s'",	\
+		TRACE_ERROR("file %s: line %d (%s): error '%d' during '%s'",	\
            __FILE__, __LINE__, __FUNCTION__, error, name);					\
 } while (0)
 
@@ -57,8 +58,8 @@ tiny_bus_thread_worker(void *context)
 		msg = (tiny_msg_t *)async_queue_pop(self->msg_queue);
 		if (msg->msg_id == TINY_BUS_MSG_EXIT)
 		{
-			fprintf(stdout, "file %s: line %d (%s): bus exit",
-				__FILE__, __LINE__, __FUNCTION__);				
+		    TRACE_WARNING("file %s: line %d (%s): bus exit\r\n", 
+                __FILE__, __LINE__, __FUNCTION__);
 			break;
 		}
 
@@ -183,7 +184,13 @@ tiny_bus_result_t
 slot_subscribe_message(tiny_bus_t *bus, slot_t *slot, message_id_t id)
 {
 	// this message id's slot lish must be allocated;
-	assert(bus->slots[id]);
+	if (bus->slots[id] == NULL)
+    {
+        // must allocat message id firstly.
+        
+        return TINY_BUS_FAILED;
+    }
+
 	
 	pthread_mutex_lock(bus->mutex);
 	list_insert_tail(bus->slots[id], slot);
@@ -208,10 +215,6 @@ slot_new(char *name, uint16_t port)
 		return NULL;
 	}
 
-	length = strlen(name);
-	length = (length >= sizeof(slot->slot_name)) ? (sizeof(slot->slot_name) - 1) : length;		
-	strncpy(slot->slot_name, name, length);
-	
 	slot->so = socket(AF_INET, SOCK_DGRAM, 0);
 	if (slot->so < 0)
 	{
@@ -260,7 +263,11 @@ slot_new(char *name, uint16_t port)
 		slot_free(slot);
 		return NULL;
 	}
-	
+
+	length = strlen(name);
+	length = (length < sizeof(slot->slot_name)) ? length : (sizeof(slot->slot_name) - 1);
+	strncpy(slot->slot_name, name, length);
+	    
 	return slot;
 }
 
