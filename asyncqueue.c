@@ -27,34 +27,26 @@ async_queue_new( void )
 	async_queue->mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
 	if (async_queue->mutex == NULL)
 	{
-		free(async_queue->queue);
-		free(async_queue);
+		async_queue_destroy(async_queue);
 		return NULL;
 	}
 	
 	if (pthread_mutex_init(async_queue->mutex, NULL) != 0)
 	{
-		free(async_queue->mutex);
-		free(async_queue->queue);
-		free(async_queue);
+		async_queue_destroy(async_queue);
 		return NULL;
 	}
 	
 	async_queue->cond = (pthread_cond_t *)malloc(sizeof(pthread_cond_t));
 	if (async_queue->cond == NULL)
 	{
-		free(async_queue->mutex);
-		free(async_queue->queue);
-		free(async_queue);
+		async_queue_destroy(async_queue);
 		return NULL;
 	}
 	
 	if (pthread_cond_init(async_queue->cond, NULL) != 0)
 	{
-		free(async_queue->cond);
-		free(async_queue->mutex);
-		free(async_queue->queue);
-		free(async_queue);
+		async_queue_destroy(async_queue);
 		return NULL;		
 	}
 
@@ -65,15 +57,22 @@ void
 async_queue_destroy(async_queue_t *queue)
 {
 	assert(queue);
-	assert(queue->mutex);
-	assert(queue->cond);
 	
-	pthread_mutex_lock(queue->mutex);
-	queue_free(queue->queue);
-	pthread_mutex_unlock(queue->mutex);
+	if (queue->queue)
+		queue_free(queue->queue);
+		
+	if (queue->cond)
+	{
+		pthread_cond_destroy(queue->cond);
+		free(queue->cond);
+	}
 	
-	free(queue->cond);
-	free(queue->mutex);	
+	if (queue->mutex)
+	{
+		pthread_mutex_destroy(queue->mutex);
+		free(queue->mutex);			
+	}
+	
 	free(queue);
 }
 

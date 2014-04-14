@@ -8,6 +8,17 @@
 
 #include <sys/types.h>
 #include <stdint.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+typedef int		socklen_t;
+typedef SOCKET	socket_t;
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+typedef int		socket_t
+#endif
+
 #include "atomic.h"
 #include "asyncqueue.h"
 
@@ -16,7 +27,8 @@ extern "C" {
 #endif
 
 #define TINY_BUS_MSG_EXIT		0xFFFFFFFF
-#define TINY_BUS_USER_MSG_BASE	0x00000000
+
+#define BUS_MESSAGE_MAX_ID		256	// base index is 0
 
 typedef struct _tiny_bus_msg_priv
 {
@@ -56,14 +68,6 @@ typedef enum _slot_status
 typedef struct _slot
 {
 	/*
-	 * Messages can be posted to slot, it'multiple message IDs list(subscription);
-	 * when posting message, bus will check whether message id is in queue, true
-	 * then insert into slot's member: msg_queue.
-	 */
-	pthread_mutex_t	*mutex;
-	list_t			*subscription;	
-	
-	/*
 	 * for slot debug
 	 */
 	unsigned char	slot_name[32];
@@ -71,12 +75,17 @@ typedef struct _slot
 	/*
 	 * Identify whether slot is ready to recv message
 	 */ 
-	slot_status_t	slot_ready;
+	slot_status_t	slot_ready;	
 	
     /*
-	 * contain message posted by bus, will be processed by app module
+	 * Contain message posted by bus, will be processed by app module.
+	 * Message will be push into queue, and send to socket packet to notify
+	 * receiver.
 	 */
-	async_queue_t	*msg_queue;
+	pthread_mutex_t	*mutex;
+	queue_t			*msg_queue;	
+	socket_t		socket;			// used to send/receive notify
+	
 } slot_t;
 
 typedef struct _tiny_bus
@@ -84,36 +93,31 @@ typedef struct _tiny_bus
 	/*
 	 * bus thread
 	 */
-	pthread_t		*thread;
+	pthread_t		*thread;	
 	
 	/*
 	 * contain tiny_msg_t object
 	 */
 	async_queue_t	*msg_queue;
+
+	/*
+	 * Identify current registered message ID count
+	 */
+    uint32_t		msg_id_count;
 	
 	/*
-	 * contain slot_t object
+	 * contain slot_t object，here I use array to associate message ID and slot
+	 * list, a message ID is a index of array actually, and it can be assocaited
+	 * with a slot list, slot subscribed message ID will be pushed into the slot
+	 * list
 	 */
-	pthread_mutex_t	*mutex;
-	list_t			*slot_list;
+	pthread_mutex_t	*mutex;	
+	list_t *		slots[BUS_MESSAGE_MAX_ID];
 } tiny_bus_t;
-
-typedef struct _publisher
-{
-	slot_t			*slot;
-	//...
-} publisher_t;
-
-typedef struct _subscriber
-{
-	slot_t			*slot;
-	
-	//...
-} subscriber_t;
 
 typedef struct _dustbin
 {
-	subscriber_t 	*subscriber;
+	slot_t 	*slot;
 } dustbit_t;
 
 typedef enum
@@ -125,11 +129,14 @@ typedef enum
 tiny_bus_t* tiny_bus_new(void);	// allocate a bus object
 void tiny_bus_destroy(tiny_bus_t *bus);	// destroy a bus object
 
-tiny_bus_result_t	tiny_bus_add_slot(tiny_bus_t *bus, slot_t *slot);
-tiny_bus_result_t	tiny_bus_del_slot(tiny_bus_t *bus, slot_t *slot);
-
-slot_t* slot_new(char *name);
+slot_t* slot_new(char *name, uint16_t port);
 void slot_free(slot_t *slot);
+
+tiny_bus_result_t
+slot_subscribe_message(tiny_bus_t *bus, slot_t *slot, message_id_t id);
+
+tiny_bus_result_t	slot_write(slot_t *slot, tiny_msg_t *msg);
+tiny_msg_t *		slot_read(slot_t *slot);
 
 #ifdef __cplusplus
 }

@@ -5,6 +5,21 @@
 extern "C" {
 #endif
 
+/*#if defined WIN32
+typedef volatile unsigned long atomic_t;
+# define atomic_set(p, val) InterlockedExchange(p, val)
+# define atomic_get(p) InterlockedExchangeAdd(p, 0)
+# define atomic_add(p, val) InterlockedExchangeAdd(p, val)
+# define atomic_sub(p, val) InterlockedExchangeSubtract(p, val)
+# define atomic_inc(p) InterlockedExchangeAdd(p, 1)
+# define atomic_dec(p) InterlockedExchangeSubtract(p, 1)
+inline int atomic_dec_and_test_zero(p)
+{
+	InterlockedExchangeSubtract(p, 1);
+	
+	return (*p == 0) ? 0 : 1;
+}
+#endif*/
 
 #if defined (__GNUC__) && __GNUC__ >= 4 /* since 4.1.2 */
 
@@ -18,21 +33,6 @@ typedef volatile int atomic_t;
 # define atomic_inc(p) __sync_add_and_fetch(p, 1)
 # define atomic_dec(p) __sync_sub_and_fetch(p, 1)
 # define atomic_dec_and_test_zero(p) (__sync_sub_and_fetch(p, 1) == 0)
-
-#elif defined _WINDOWS_
-typedef volatile unsigned long atomic_t;
-# define atomic_set(p, val) InterlockedExchange(p, val)
-# define atomic_get(p) InterlockedExchangeAdd(p, 0)
-# define atomic_add(p, val) InterlockedExchangeAdd(p, val)
-# define atomic_sub(p, val) InterlockedExchangeSubtract(p, val)
-# define atomic_inc(p) InterlockedExchangeAdd(p, 1)
-# define atomic_dec(p) InterlockedExchangeSubtract(p, 1)
-inline int atomic_dec_and_test_zero(p)
-{
-	InterlockedExchangeSubtract(p, 1);
-	
-	return (*p == 0) ? 0 : 1;
-} 
 
 #elif defined _ARM_
 # include <atomic_armv6.h>
