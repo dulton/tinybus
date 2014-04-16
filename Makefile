@@ -106,7 +106,7 @@ AUTOMAKE = ${SHELL} /home/zhangsy/developing/libbus/missing --run automake-1.11
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -O2
+CFLAGS = 
 CPP = gcc -E
 CPPFLAGS = 
 CYGPATH_W = echo

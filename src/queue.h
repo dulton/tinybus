@@ -23,6 +23,7 @@ typedef void (*func_visit_custom)(void *data_orig, void *data_custom);
 /*
  * List functions.
  */
+void list_free(list_t *list);
 list_t *list_insert_head(list_t *list, void *data);
 list_t *list_insert_tail(list_t *list, void *data);
 list_t *list_remove(list_t *list, void *data);

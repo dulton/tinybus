@@ -3,20 +3,24 @@
  * Copyright by Zhang Shiyong, 2014. shiyong.zhang.cn@outlook.com
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include "tinybus.h"
 #include "trace.h"
+
 
 #define tiny_bus_print_err(err, name) \
 do {\
 	int error = (err); 							\
 	if (error)	 		 		 			\
 		TRACE_ERROR("file %s: line %d (%s): error '%d' during '%s'",	\
-           __FILE__, __LINE__, __FUNCTION__, error, name);					\
+           __FILE__, __LINE__, __FUNCTION__, err, name);				\
 } while (0)
 
 static void
@@ -205,7 +209,6 @@ slot_new(char *name, uint16_t port)
 	slot_t *slot;
 	int length, result;
     struct sockaddr_in addr;
-	socklen_t addrlen;
     char sock_resuse = 1; 
 	
 	slot = (slot_t *)calloc(1, sizeof(slot_t));
@@ -232,8 +235,8 @@ slot_new(char *name, uint16_t port)
 	
 	addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    inet_aton("127.0.0.1", &addr.sin_addr);		
-	if (bind(slot->so, (struct sockaddr *)&addr, addrlen) < 0)
+    inet_aton("127.0.0.1", &addr.sin_addr);
+	if (bind(slot->so, (struct sockaddr *)&addr, sizeof(addr)) < 0)
 	{
 		tiny_bus_print_err(errno, "bind");
 		slot_free(slot);		

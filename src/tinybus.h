@@ -70,7 +70,7 @@ typedef struct _slot
 	/*
 	 * for slot debug
 	 */
-	unsigned char	slot_name[32];
+	char	        slot_name[32];
 	
 	/*
 	 * Identify whether slot is ready to recv message

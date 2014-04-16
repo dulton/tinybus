@@ -1,0 +1,6 @@
+autoscan: warning: missing AC_CHECK_FUNCS([gettimeofday]) wanted by: 
+	src/trace.c:217
+autoscan: warning: missing AC_CHECK_HEADERS([netinet/in.h]) wanted by: 
+	src/tinybus.c:10
+autoscan: warning: missing AC_CHECK_HEADERS([sys/time.h]) wanted by: 
+	src/trace.c:2

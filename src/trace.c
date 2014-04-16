@@ -3,89 +3,175 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <assert.h>
 #include "trace.h"
 
-#define TRACE_MAX_BUF  (128 * 1024)
-#define MAX_PRINT_SIZE 1024
+#define TRACE_MAX_BUF  (4 * 1024)
 
-static uint32_t
-async_ring_buf_get_used_space(async_ring_buf_t *buf)
-{
-  int datasize = 0;
-  
-  /*
-   * 获取数据长度，read_pos == write_pos 时，datasize = 0， 数据为空;
-   * read_pos < write_pos时，datasize = write_pos - read_pos;
-   * read_pos > write_pos时，datasize = size + write_pos -read_pos;
-   */
-  if (buf->read_pos > buf->write_pos)
-    datasize = buf->size - buf->read_pos + buf->write_pos;
-  else
-    datasize = buf->write_pos - buf->read_pos;
-
-  return datasize;    
-}
+#define print_err(err, name) \
+do {\
+	int error = (err); 							\
+	if (error)	 		 		 			\
+		fprintf(stderr, "file %s: line %d (%s): error '%d' during '%s'\r\n",	\
+           __FILE__, __LINE__, __FUNCTION__, err, name);				\
+} while (0)
 
 static uint32_t
 async_ring_buf_get_free_space(async_ring_buf_t *buf)
 {
-    uint32_t space;
+    uint32_t space = 0;
 
-    /*
-     * 获取可用空间长度，read_pos == write_pos时，space = size, 空间未用；
-     * read_pos < write_pos时，space = size - write_pos + read_pos;
-     * read_pos > write_pos时，space = read_pos - write_pos;
-     */
-    pthread_mutex_lock(&buf->mutex);
-    if (buf->read_pos > buf->write_pos)
-        space = buf->read_pos - buf->write_pos;
-    else
+    if (buf->read_reverse == buf->write_reverse)
         space = buf->size - buf->write_pos + buf->read_pos;
-    pthread_mutex_unlock(&buf->mutex);
-
+    else if ((buf->write_reverse - buf->read_reverse) == 1)
+        space = buf->read_pos - buf->write_pos;
+        
     return space;
 }
 
-
-static void *trace_thread_worker(void *self)
+static uint32_t
+async_ring_buf_get_used_space(async_ring_buf_t *buf)
 {
-    int     result, readbytes;
-    char    string[MAX_PRINT_SIZE];
+    int datasize = 0;
+
+    if (buf->read_reverse == buf->write_reverse)
+        datasize = buf->write_pos - buf->read_pos;
+    else if ((buf->write_reverse - buf->read_reverse) == 1)
+        datasize = buf->size - buf->read_pos + buf->write_pos;
+    else
+        datasize = buf->size;
+    
+    return datasize;    
+}
+
+
+static uint32_t
+async_ring_buf_read(async_ring_buf_t *buf, char *dest, size_t len)
+{
+    uint32_t readbytes, usedbytes;
+
+    assert(buf);
+    if (buf->read_reverse == buf->write_reverse)
+    {
+        usedbytes = buf->write_pos - buf->read_pos;
+        readbytes = (len <= usedbytes) ? len : usedbytes;
+        strncpy(dest, buf->start + buf->read_pos, readbytes);
+    }
+    else if ((buf->write_reverse - buf->read_reverse) == 1)
+    {
+        if (len <= (buf->size - buf->read_pos))
+        {
+            strncpy(dest, buf->start + buf->read_pos, len);
+            readbytes = len;
+        }
+        else
+        {
+            usedbytes = buf->size - buf->read_pos + buf->write_pos;
+            readbytes = len <= usedbytes ? len : usedbytes;
+            
+            strncpy(dest, buf->start + buf->read_pos, buf->size - buf->read_pos);
+            strncpy(dest + buf->size - buf->read_pos, buf->start, readbytes - buf->size + buf->read_pos);
+        }        
+    }
+    else
+    {
+        assert(0);
+    }
+
+    buf->read_pos += readbytes;
+    if (buf->read_pos > buf->size)
+    {
+        buf->read_pos = buf->read_pos % buf->size;
+        buf->read_reverse++;
+    }
+        
+    return readbytes;
+}
+
+static void *
+trace_thread_worker(void *self)
+{
+    int     exit_thread;
+    int     readbytes, cycle;
+    char    string[TRACE_LINE_MAX_SIZE];
     async_ring_buf_t *buf = (async_ring_buf_t *)self;
 
-    for (;;)
-    {
-        readbytes = 0; // initiate every time
-        
-        pthread_mutex_lock(&buf->mutex);
-        result = pthread_cond_wait(&buf->cond, &buf->mutex);
-        if (!result)
-        {
-            readbytes = async_ring_buf_get_used_space(buf);
-            if (readbytes > MAX_PRINT_SIZE - 1)
-                readbytes = MAX_PRINT_SIZE - 1;
-            
-            if ((buf->read_pos + readbytes) <= buf->write_pos)
-                strncpy(string, buf->start + buf->read_pos, readbytes);
-            else
-            {
-                strncpy(string, buf->start + buf->read_pos, buf->size - buf->read_pos);
-                strncpy(string + buf->size - buf->read_pos, buf->start, readbytes - buf->size + buf->read_pos);                
-            }
+    if (atomic_get(&buf->level) <= TRACE_DETAIL_LEVEL)
+        fprintf(stderr, "\r\ntrace thread started...\r\n");
 
-            buf->read_pos = (buf->read_pos + readbytes) % buf->size;
-        }                    
+    exit_thread = 0;
+    while (!exit_thread)
+    {
+        assert(buf);        
+        readbytes = 0; // initiate every time        
+
+        sem_wait(buf->sem);
+        
+        do
+        {
+            pthread_mutex_lock(&buf->mutex);
+            readbytes = async_ring_buf_get_used_space(buf);
+            if (readbytes > 0)
+            {
+                if (readbytes > sizeof(string) - 1)
+                {
+                    readbytes = sizeof(string) - 1;
+                    cycle = 1;
+                }
+                else
+                    cycle = 0;
+
+                readbytes = async_ring_buf_read(buf, string, readbytes);
+            }        
+            pthread_mutex_unlock(&buf->mutex);
+          
+            
+            if (readbytes > 0)
+            {
+                string[readbytes] = '\0'; // string terminated with NULL
+                fprintf(stdout, "%s", string);
+            }
+    
+        } while (cycle);
+
+        exit_thread = atomic_get(&buf->exit);
+    }        
+
+    // check whether there are still buffer needing to print
+    do
+    {
+        pthread_mutex_lock(&buf->mutex);
+        readbytes = async_ring_buf_get_used_space(buf);
+        if (readbytes > 0)
+        {
+            if (readbytes > sizeof(string) - 1)
+            {
+                readbytes = sizeof(string) - 1;
+                cycle = 1;
+            }
+            else
+                cycle = 0;
+
+            readbytes = async_ring_buf_read(buf, string, readbytes);
+        }        
         pthread_mutex_unlock(&buf->mutex);
+      
         
         if (readbytes > 0)
         {
             string[readbytes] = '\0'; // string terminated with NULL
-            fprintf(stderr, "%s", string);
+            fprintf(stdout, "%s", string);
         }
-        
-        atomic_get(&buf->exit);
-        if (buf->exit)
-            break;
+
+    } while (cycle);
+    
+    
+    if (atomic_get(&buf->level) <= TRACE_DETAIL_LEVEL)
+    {
+        fprintf(stderr, "\r\ntrace thread exited...\r\n");
+        fprintf(stderr, "buf->read_pos = %u, buf->write_pos = %u, buf->read_reverse = %u, buf->write_reverse = %u\r\n",
+            buf->read_pos, buf->write_pos, buf->read_reverse, buf->write_reverse);
     }
 
     return NULL;
@@ -107,9 +193,18 @@ async_ring_buf_new(uint32_t size)
         free(buf);
         return NULL;
     }
+    buf->size = size;
 
     pthread_mutex_init(&buf->mutex, NULL);
-    pthread_cond_init(&buf->cond, NULL);
+
+    buf->sem = (sem_t *)malloc(sizeof(sem_t));
+    if (buf->sem == NULL)
+    {
+        free(buf);
+        return NULL;
+    }    
+    sem_init(buf->sem, 0, 0);;
+       
     result = pthread_create(&buf->thread, NULL, trace_thread_worker, buf);
     if (result)
     {
@@ -129,10 +224,13 @@ async_ring_buf_free(async_ring_buf_t *buf)
     assert(buf);
 
     atomic_set(&buf->exit, 1);
+    sem_post(buf->sem);
+    
     pthread_join(buf->thread, NULL);
     
-    pthread_mutex_destroy(&buf->mutex);
-    pthread_cond_destroy(&buf->cond);
+    pthread_mutex_destroy(&buf->mutex);    
+    sem_destroy(buf->sem);
+    free(buf->sem);
 
     if (buf->start)
         free(buf->start);
@@ -143,34 +241,57 @@ async_ring_buf_free(async_ring_buf_t *buf)
 uint32_t
 async_ring_buf_write(async_ring_buf_t *buf, char *string, size_t len)
 {
-    uint32_t free_size, writable_size;
+    uint32_t free_size;
+    int32_t sem_value;
 
     assert(buf);
-    free_size = async_print_get_free_space(buf);
-
-    writable_size = (free_size < len) ? free_size : len;
-    if (writable_size == 0)
-        return 0;
+    assert(len <= TRACE_LINE_MAX_SIZE);
 
     pthread_mutex_lock(&buf->mutex);
-
-    if(buf->write_pos + writable_size > buf->size)
+    free_size = async_ring_buf_get_free_space(buf);
+    pthread_mutex_unlock(&buf->mutex);
+        
+    while (free_size < len)
     {
-      memcpy(buf->start + buf->write_pos, string, buf->size - buf->write_pos);
-      memcpy(buf->start, string + buf->size - buf->write_pos, 
-        writable_size - (buf->size - buf->write_pos));
+        usleep(10000);   // wait 10 millsecond
+
+        // check whether no semaphore for work thread, obviously if semaphore's
+        // value is zero, its free space existe
+        sem_getvalue(buf->sem, &sem_value);
+        if (sem_value <= 0)
+        {
+            pthread_mutex_lock(&buf->mutex);
+            free_size = async_ring_buf_get_free_space(buf);
+            pthread_mutex_unlock(&buf->mutex);
+        }
+    }
+
+    pthread_mutex_lock(&buf->mutex);
+    if(buf->write_pos + len > buf->size)
+    {
+        memcpy(buf->start + buf->write_pos, string, buf->size - buf->write_pos);
+        memcpy(buf->start, string + buf->size - buf->write_pos, 
+            len - (buf->size - buf->write_pos));
     }
     else
     {
-      memcpy(buf->start + buf->write_pos, string, writable_size);
+        memcpy(buf->start + buf->write_pos, string, len);
     }
-    
-    buf->write_pos = (buf->write_pos + writable_size) % buf->size;
 
-    pthread_cond_signal(&buf->cond);
+    buf->write_pos += len;
+    if (buf->write_pos > buf->size)
+    {
+        buf->write_pos = buf->write_pos % buf->size;
+        buf->write_reverse++;
+    }
+
     pthread_mutex_unlock(&buf->mutex);
+    
+    sem_getvalue(buf->sem, &sem_value);
+    if (sem_value <= 0)
+        sem_post(buf->sem);         
 
-    return writable_size;
+    return free_size;
 }
 
 //===========================================================================
@@ -217,7 +338,7 @@ get_timestamp_str(int level, char *buf, size_t len)
     gettimeofday(&timestamp, NULL);
     tmTime = localtime((time_t *)&timestamp.tv_sec);
     
-    result = sprintf(buf, "%02d:%02d:%02d.%06d %s ", 
+    result = sprintf(buf, "%02d:%02d:%02d.%06ld %s ", 
         tmTime->tm_hour, tmTime->tm_min, tmTime->tm_sec, timestamp.tv_usec,
         get_level_str(level));
 
@@ -244,9 +365,8 @@ async_trace_destroy(void)
 static void
 trace_args(int level, const char *format, va_list args)
 {
-
-    char           string[1024];
-    uint32_t       len;
+    char string[TRACE_LINE_MAX_SIZE];
+    int  len, result;
     
     if (output == NULL)
         return;
@@ -255,7 +375,11 @@ trace_args(int level, const char *format, va_list args)
     if (len <= 0)
         return;       
 
-    len += vsnprintf(string+len, sizeof(string) - len, format, args);
+    result = vsnprintf(string+len, (sizeof(string) - len), format, args);
+    if (result > (sizeof(string) - len))
+        result = sizeof(string) - len;
+
+    len += result;
     if (len > 0)
         async_ring_buf_write(output, string, len);
 
@@ -267,8 +391,7 @@ trace(int level, const char *format, ...)
 {
     va_list args;
 
-    atomic_get(&output->level);    
-    if (level < output->level)
+    if (level < atomic_get(&output->level))
         return;
 
     va_start(args, format);

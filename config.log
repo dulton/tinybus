@@ -57,77 +57,77 @@ configure:2646: result: yes
 configure:2770: checking for ranlib
 configure:2786: found /usr/bin/ranlib
 configure:2797: result: ranlib
-configure:2869: checking for gcc
-configure:2885: found /usr/bin/gcc
-configure:2896: result: gcc
-configure:3125: checking for C compiler version
-configure:3134: gcc --version >&5
+configure:2871: checking for gcc
+configure:2887: found /usr/bin/gcc
+configure:2898: result: gcc
+configure:3127: checking for C compiler version
+configure:3136: gcc --version >&5
 gcc (Debian 4.4.5-8) 4.4.5
 Copyright (C) 2010 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-configure:3145: $? = 0
-configure:3134: gcc -v >&5
+configure:3147: $? = 0
+configure:3136: gcc -v >&5
 Using built-in specs.
 Target: i486-linux-gnu
 Configured with: ../src/configure -v --with-pkgversion='Debian 4.4.5-8' --with-bugurl=file:///usr/share/doc/gcc-4.4/README.Bugs --enable-languages=c,c++,fortran,objc,obj-c++ --prefix=/usr --program-suffix=-4.4 --enable-shared --enable-multiarch --enable-linker-build-id --with-system-zlib --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --with-gxx-include-dir=/usr/include/c++/4.4 --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-objc-gc --enable-targets=all --with-arch-32=i586 --with-tune=generic --enable-checking=release --build=i486-linux-gnu --host=i486-linux-gnu --target=i486-linux-gnu
 Thread model: posix
 gcc version 4.4.5 (Debian 4.4.5-8) 
-configure:3145: $? = 0
-configure:3134: gcc -V >&5
+configure:3147: $? = 0
+configure:3136: gcc -V >&5
 gcc: '-V' option must have argument
-configure:3145: $? = 1
-configure:3134: gcc -qversion >&5
+configure:3147: $? = 1
+configure:3136: gcc -qversion >&5
 gcc: unrecognized option '-qversion'
 gcc: no input files
-configure:3145: $? = 1
-configure:3165: checking whether the C compiler works
-configure:3187: gcc    conftest.c  >&5
-configure:3191: $? = 0
-configure:3239: result: yes
-configure:3242: checking for C compiler default output file name
-configure:3244: result: a.out
-configure:3250: checking for suffix of executables
-configure:3257: gcc -o conftest    conftest.c  >&5
-configure:3261: $? = 0
-configure:3283: result: 
-configure:3305: checking whether we are cross compiling
-configure:3313: gcc -o conftest    conftest.c  >&5
-configure:3317: $? = 0
-configure:3324: ./conftest
-configure:3328: $? = 0
-configure:3343: result: no
-configure:3348: checking for suffix of object files
-configure:3370: gcc -c   conftest.c >&5
-configure:3374: $? = 0
-configure:3395: result: o
-configure:3399: checking whether we are using the GNU C compiler
-configure:3418: gcc -c   conftest.c >&5
-configure:3418: $? = 0
-configure:3427: result: yes
-configure:3436: checking whether gcc accepts -g
-configure:3456: gcc -c -g  conftest.c >&5
-configure:3456: $? = 0
-configure:3497: result: yes
-configure:3514: checking for gcc option to accept ISO C89
-configure:3578: gcc  -c -g -O2  conftest.c >&5
-configure:3578: $? = 0
-configure:3591: result: none needed
-configure:3622: checking for style of include used by make
-configure:3650: result: GNU
-configure:3675: checking dependency style of gcc
-configure:3785: result: gcc3
-configure:3803: checking for pthread_create in -lpthread
-configure:3828: gcc -o conftest -g -O2   conftest.c -lpthread   >&5
-configure:3828: $? = 0
-configure:3837: result: yes
-configure:3855: checking how to run the C preprocessor
-configure:3886: gcc -E  conftest.c
-configure:3886: $? = 0
-configure:3900: gcc -E  conftest.c
+configure:3147: $? = 1
+configure:3167: checking whether the C compiler works
+configure:3189: gcc    conftest.c  >&5
+configure:3193: $? = 0
+configure:3241: result: yes
+configure:3244: checking for C compiler default output file name
+configure:3246: result: a.out
+configure:3252: checking for suffix of executables
+configure:3259: gcc -o conftest    conftest.c  >&5
+configure:3263: $? = 0
+configure:3285: result: 
+configure:3307: checking whether we are cross compiling
+configure:3315: gcc -o conftest    conftest.c  >&5
+configure:3319: $? = 0
+configure:3326: ./conftest
+configure:3330: $? = 0
+configure:3345: result: no
+configure:3350: checking for suffix of object files
+configure:3372: gcc -c   conftest.c >&5
+configure:3376: $? = 0
+configure:3397: result: o
+configure:3401: checking whether we are using the GNU C compiler
+configure:3420: gcc -c   conftest.c >&5
+configure:3420: $? = 0
+configure:3429: result: yes
+configure:3438: checking whether gcc accepts -g
+configure:3458: gcc -c -g  conftest.c >&5
+configure:3458: $? = 0
+configure:3499: result: yes
+configure:3516: checking for gcc option to accept ISO C89
+configure:3580: gcc  -c   conftest.c >&5
+configure:3580: $? = 0
+configure:3593: result: none needed
+configure:3624: checking for style of include used by make
+configure:3652: result: GNU
+configure:3677: checking dependency style of gcc
+configure:3787: result: gcc3
+configure:3805: checking for pthread_create in -lpthread
+configure:3830: gcc -o conftest    conftest.c -lpthread   >&5
+configure:3830: $? = 0
+configure:3839: result: yes
+configure:3857: checking how to run the C preprocessor
+configure:3888: gcc -E  conftest.c
+configure:3888: $? = 0
+configure:3902: gcc -E  conftest.c
 conftest.c:12:28: error: ac_nonexistent.h: No such file or directory
-configure:3900: $? = 1
+configure:3902: $? = 1
 configure: failed program was:
 | /* confdefs.h */
 | #define PACKAGE_NAME "libbus"
@@ -141,12 +141,12 @@ configure: failed program was:
 | #define HAVE_LIBPTHREAD 1
 | /* end confdefs.h.  */
 | #include <ac_nonexistent.h>
-configure:3925: result: gcc -E
-configure:3945: gcc -E  conftest.c
-configure:3945: $? = 0
-configure:3959: gcc -E  conftest.c
+configure:3927: result: gcc -E
+configure:3947: gcc -E  conftest.c
+configure:3947: $? = 0
+configure:3961: gcc -E  conftest.c
 conftest.c:12:28: error: ac_nonexistent.h: No such file or directory
-configure:3959: $? = 1
+configure:3961: $? = 1
 configure: failed program was:
 | /* confdefs.h */
 | #define PACKAGE_NAME "libbus"
@@ -160,81 +160,81 @@ configure: failed program was:
 | #define HAVE_LIBPTHREAD 1
 | /* end confdefs.h.  */
 | #include <ac_nonexistent.h>
-configure:3988: checking for grep that handles long lines and -e
-configure:4046: result: /bin/grep
-configure:4051: checking for egrep
-configure:4113: result: /bin/grep -E
-configure:4118: checking for ANSI C header files
-configure:4138: gcc -c -g -O2  conftest.c >&5
-configure:4138: $? = 0
-configure:4211: gcc -o conftest -g -O2   conftest.c -lpthread  >&5
-configure:4211: $? = 0
-configure:4211: ./conftest
-configure:4211: $? = 0
-configure:4222: result: yes
-configure:4235: checking for sys/types.h
-configure:4235: gcc -c -g -O2  conftest.c >&5
-configure:4235: $? = 0
-configure:4235: result: yes
-configure:4235: checking for sys/stat.h
-configure:4235: gcc -c -g -O2  conftest.c >&5
-configure:4235: $? = 0
-configure:4235: result: yes
-configure:4235: checking for stdlib.h
-configure:4235: gcc -c -g -O2  conftest.c >&5
-configure:4235: $? = 0
-configure:4235: result: yes
-configure:4235: checking for string.h
-configure:4235: gcc -c -g -O2  conftest.c >&5
-configure:4235: $? = 0
-configure:4235: result: yes
-configure:4235: checking for memory.h
-configure:4235: gcc -c -g -O2  conftest.c >&5
-configure:4235: $? = 0
-configure:4235: result: yes
-configure:4235: checking for strings.h
-configure:4235: gcc -c -g -O2  conftest.c >&5
-configure:4235: $? = 0
-configure:4235: result: yes
-configure:4235: checking for inttypes.h
-configure:4235: gcc -c -g -O2  conftest.c >&5
-configure:4235: $? = 0
-configure:4235: result: yes
-configure:4235: checking for stdint.h
-configure:4235: gcc -c -g -O2  conftest.c >&5
-configure:4235: $? = 0
-configure:4235: result: yes
-configure:4235: checking for unistd.h
-configure:4235: gcc -c -g -O2  conftest.c >&5
-configure:4235: $? = 0
-configure:4235: result: yes
-configure:4250: checking for stdint.h
-configure:4250: result: yes
-configure:4250: checking for stdlib.h
-configure:4250: result: yes
-configure:4250: checking for string.h
-configure:4250: result: yes
-configure:4250: checking sys/socket.h usability
-configure:4250: gcc -c -g -O2  conftest.c >&5
-configure:4250: $? = 0
-configure:4250: result: yes
-configure:4250: checking sys/socket.h presence
-configure:4250: gcc -E  conftest.c
-configure:4250: $? = 0
-configure:4250: result: yes
-configure:4250: checking for sys/socket.h
-configure:4250: result: yes
-configure:4262: checking for inline
-configure:4278: gcc -c -g -O2  conftest.c >&5
-configure:4278: $? = 0
-configure:4286: result: inline
-configure:4304: checking for size_t
-configure:4304: gcc -c -g -O2  conftest.c >&5
-configure:4304: $? = 0
-configure:4304: gcc -c -g -O2  conftest.c >&5
+configure:3990: checking for grep that handles long lines and -e
+configure:4048: result: /bin/grep
+configure:4053: checking for egrep
+configure:4115: result: /bin/grep -E
+configure:4120: checking for ANSI C header files
+configure:4140: gcc -c   conftest.c >&5
+configure:4140: $? = 0
+configure:4213: gcc -o conftest    conftest.c -lpthread  >&5
+configure:4213: $? = 0
+configure:4213: ./conftest
+configure:4213: $? = 0
+configure:4224: result: yes
+configure:4237: checking for sys/types.h
+configure:4237: gcc -c   conftest.c >&5
+configure:4237: $? = 0
+configure:4237: result: yes
+configure:4237: checking for sys/stat.h
+configure:4237: gcc -c   conftest.c >&5
+configure:4237: $? = 0
+configure:4237: result: yes
+configure:4237: checking for stdlib.h
+configure:4237: gcc -c   conftest.c >&5
+configure:4237: $? = 0
+configure:4237: result: yes
+configure:4237: checking for string.h
+configure:4237: gcc -c   conftest.c >&5
+configure:4237: $? = 0
+configure:4237: result: yes
+configure:4237: checking for memory.h
+configure:4237: gcc -c   conftest.c >&5
+configure:4237: $? = 0
+configure:4237: result: yes
+configure:4237: checking for strings.h
+configure:4237: gcc -c   conftest.c >&5
+configure:4237: $? = 0
+configure:4237: result: yes
+configure:4237: checking for inttypes.h
+configure:4237: gcc -c   conftest.c >&5
+configure:4237: $? = 0
+configure:4237: result: yes
+configure:4237: checking for stdint.h
+configure:4237: gcc -c   conftest.c >&5
+configure:4237: $? = 0
+configure:4237: result: yes
+configure:4237: checking for unistd.h
+configure:4237: gcc -c   conftest.c >&5
+configure:4237: $? = 0
+configure:4237: result: yes
+configure:4252: checking for stdint.h
+configure:4252: result: yes
+configure:4252: checking for stdlib.h
+configure:4252: result: yes
+configure:4252: checking for string.h
+configure:4252: result: yes
+configure:4252: checking sys/socket.h usability
+configure:4252: gcc -c   conftest.c >&5
+configure:4252: $? = 0
+configure:4252: result: yes
+configure:4252: checking sys/socket.h presence
+configure:4252: gcc -E  conftest.c
+configure:4252: $? = 0
+configure:4252: result: yes
+configure:4252: checking for sys/socket.h
+configure:4252: result: yes
+configure:4264: checking for inline
+configure:4280: gcc -c   conftest.c >&5
+configure:4280: $? = 0
+configure:4288: result: inline
+configure:4306: checking for size_t
+configure:4306: gcc -c   conftest.c >&5
+configure:4306: $? = 0
+configure:4306: gcc -c   conftest.c >&5
 conftest.c: In function 'main':
 conftest.c:62: error: expected expression before ')' token
-configure:4304: $? = 1
+configure:4306: $? = 1
 configure: failed program was:
 | /* confdefs.h */
 | #define PACKAGE_NAME "libbus"
@@ -302,33 +302,33 @@ configure: failed program was:
 |   ;
 |   return 0;
 | }
-configure:4304: result: yes
-configure:4315: checking for uint16_t
-configure:4315: gcc -c -g -O2  conftest.c >&5
-configure:4315: $? = 0
-configure:4315: result: yes
-configure:4327: checking for uint32_t
-configure:4327: gcc -c -g -O2  conftest.c >&5
-configure:4327: $? = 0
-configure:4327: result: yes
-configure:4345: checking for stdlib.h
-configure:4345: result: yes
-configure:4355: checking for GNU libc compatible malloc
-configure:4379: gcc -o conftest -g -O2   conftest.c -lpthread  >&5
-configure:4379: $? = 0
-configure:4379: ./conftest
-configure:4379: $? = 0
-configure:4389: result: yes
-configure:4413: checking for memset
-configure:4413: gcc -o conftest -g -O2   conftest.c -lpthread  >&5
+configure:4306: result: yes
+configure:4317: checking for uint16_t
+configure:4317: gcc -c   conftest.c >&5
+configure:4317: $? = 0
+configure:4317: result: yes
+configure:4329: checking for uint32_t
+configure:4329: gcc -c   conftest.c >&5
+configure:4329: $? = 0
+configure:4329: result: yes
+configure:4347: checking for stdlib.h
+configure:4347: result: yes
+configure:4357: checking for GNU libc compatible malloc
+configure:4381: gcc -o conftest    conftest.c -lpthread  >&5
+configure:4381: $? = 0
+configure:4381: ./conftest
+configure:4381: $? = 0
+configure:4391: result: yes
+configure:4415: checking for memset
+configure:4415: gcc -o conftest    conftest.c -lpthread  >&5
 conftest.c:51: warning: conflicting types for built-in function 'memset'
-configure:4413: $? = 0
-configure:4413: result: yes
-configure:4413: checking for socket
-configure:4413: gcc -o conftest -g -O2   conftest.c -lpthread  >&5
-configure:4413: $? = 0
-configure:4413: result: yes
-configure:4544: creating ./config.status
+configure:4415: $? = 0
+configure:4415: result: yes
+configure:4415: checking for socket
+configure:4415: gcc -o conftest    conftest.c -lpthread  >&5
+configure:4415: $? = 0
+configure:4415: result: yes
+configure:4546: creating ./config.status
 
 ## ---------------------- ##
 ## Running config.status. ##
@@ -422,7 +422,7 @@ AUTOMAKE='${SHELL} /home/zhangsy/developing/libbus/missing --run automake-1.11'
 AWK='gawk'
 CC='gcc'
 CCDEPMODE='depmode=gcc3'
-CFLAGS='-g -O2'
+CFLAGS=''
 CPP='gcc -E'
 CPPFLAGS=''
 CYGPATH_W='echo'
@@ -531,57 +531,3 @@ target_alias=''
 #define HAVE_SOCKET 1
 
 configure: exit 0
-
-## ---------------------- ##
-## Running config.status. ##
-## ---------------------- ##
-
-This file was extended by libbus config.status 0.0.1, which was
-generated by GNU Autoconf 2.67.  Invocation command line was
-
-  CONFIG_FILES    = 
-  CONFIG_HEADERS  = 
-  CONFIG_LINKS    = 
-  CONFIG_COMMANDS = 
-  $ ./config.status src/Makefile depfiles
-
-on JXJ-RD-Compiler-Server
-
-config.status:867: creating src/Makefile
-config.status:1095: executing depfiles commands
-
-## ---------------------- ##
-## Running config.status. ##
-## ---------------------- ##
-
-This file was extended by libbus config.status 0.0.1, which was
-generated by GNU Autoconf 2.67.  Invocation command line was
-
-  CONFIG_FILES    = 
-  CONFIG_HEADERS  = 
-  CONFIG_LINKS    = 
-  CONFIG_COMMANDS = 
-  $ ./config.status src/Makefile depfiles
-
-on JXJ-RD-Compiler-Server
-
-config.status:867: creating src/Makefile
-config.status:1095: executing depfiles commands
-
-## ---------------------- ##
-## Running config.status. ##
-## ---------------------- ##
-
-This file was extended by libbus config.status 0.0.1, which was
-generated by GNU Autoconf 2.67.  Invocation command line was
-
-  CONFIG_FILES    = 
-  CONFIG_HEADERS  = 
-  CONFIG_LINKS    = 
-  CONFIG_COMMANDS = 
-  $ ./config.status src/Makefile depfiles
-
-on JXJ-RD-Compiler-Server
-
-config.status:867: creating src/Makefile
-config.status:1095: executing depfiles commands

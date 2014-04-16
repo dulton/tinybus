@@ -71,7 +71,7 @@ LIBRARIES = $(lib_LIBRARIES)
 AR = ar
 ARFLAGS = cru
 libtinybus_a_AR = $(AR) $(ARFLAGS)
-libtinybus_a_LIBADD =
+libtinybus_a_DEPENDENCIES =
 am_libtinybus_a_OBJECTS = libtinybus_a-asyncqueue.$(OBJEXT) \
 	libtinybus_a-queue.$(OBJEXT) libtinybus_a-tinybus.$(OBJEXT) \
 	libtinybus_a-trace.$(OBJEXT)
@@ -98,7 +98,7 @@ AUTOMAKE = ${SHELL} /home/zhangsy/developing/libbus/missing --run automake-1.11
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -O2
+CFLAGS = 
 CPP = gcc -E
 CPPFLAGS = 
 CYGPATH_W = echo
@@ -166,7 +166,7 @@ mandir = ${datarootdir}/man
 mkdir_p = /bin/mkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /home/zhangsy/usr/x86/debug
+prefix = /home/zhangsy/usr/x86/debug/tinybus
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -180,12 +180,12 @@ top_srcdir = ..
 AUTOMAKE_OPTIONS = foreign
 lib_LIBRARIES = libtinybus.a
 libtinybus_a_SOURCES = asyncqueue.c queue.c tinybus.c trace.c
-#libtinybus_a_LIBADD=libpthread.a
+libtinybus_a_LIBADD = 
 libtinybus_a_LIBFLAGS = -shared
-libtinybus_a_CFLAGS = -fPIC
-libtinybus_a_CXXFLAGS = -fPIC
+libtinybus_a_CFLAGS = -g -fPIC -Wall -D_GNU_SOURCE
+libtinybus_a_CXXFLAGS = -g -fPIC -Wall -D_GNU_SOURCE
 tinybusincludedir = $(includedir)
-tinybusinclude_HEADERS = $(top_srcdir)/src/*.h 
+tinybusinclude_HEADERS = $(top_srcdir)/src/*.h
 all: all-am
 
 .SUFFIXES:
