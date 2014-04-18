@@ -89,56 +89,13 @@ async_ring_buf_read(async_ring_buf_t *buf, char *dest, size_t len)
     return readbytes;
 }
 
-static void *
-trace_thread_worker(void *self)
+static void
+trace_print_until_zero(async_ring_buf_t *buf)
 {
-    int     exit_thread;
     int     readbytes, cycle;
     char    string[TRACE_LINE_MAX_SIZE];
-    async_ring_buf_t *buf = (async_ring_buf_t *)self;
 
-    if (atomic_get(&buf->level) <= TRACE_DETAIL_LEVEL)
-        fprintf(stderr, "\r\ntrace thread started...\r\n");
-
-    exit_thread = 0;
-    while (!exit_thread)
-    {
-        assert(buf);        
-        readbytes = 0; // initiate every time        
-
-        sem_wait(buf->sem);
-        
-        do
-        {
-            pthread_mutex_lock(&buf->mutex);
-            readbytes = async_ring_buf_get_used_space(buf);
-            if (readbytes > 0)
-            {
-                if (readbytes > sizeof(string) - 1)
-                {
-                    readbytes = sizeof(string) - 1;
-                    cycle = 1;
-                }
-                else
-                    cycle = 0;
-
-                readbytes = async_ring_buf_read(buf, string, readbytes);
-            }        
-            pthread_mutex_unlock(&buf->mutex);
-          
-            
-            if (readbytes > 0)
-            {
-                string[readbytes] = '\0'; // string terminated with NULL
-                fprintf(stdout, "%s", string);
-            }
-    
-        } while (cycle);
-
-        exit_thread = atomic_get(&buf->exit);
-    }        
-
-    // check whether there are still buffer needing to print
+    readbytes = 0; // initiate every time    
     do
     {
         pthread_mutex_lock(&buf->mutex);
@@ -152,7 +109,7 @@ trace_thread_worker(void *self)
             }
             else
                 cycle = 0;
-
+    
             readbytes = async_ring_buf_read(buf, string, readbytes);
         }        
         pthread_mutex_unlock(&buf->mutex);
@@ -163,15 +120,40 @@ trace_thread_worker(void *self)
             string[readbytes] = '\0'; // string terminated with NULL
             fprintf(stdout, "%s", string);
         }
-
+    
     } while (cycle);
+    
+    return;
+}
+
+static void *
+trace_thread_worker(void *self)
+{
+    int     exit_thread;
+    async_ring_buf_t *buf = (async_ring_buf_t *)self;
+
+    if (atomic_get(&buf->level) <= TRACE_DETAIL_LEVEL)
+        fprintf(stderr, "\r\ntrace thread started...\r\n");
+
+    exit_thread = 0;
+    while (!exit_thread)
+    {
+        assert(buf);        
+
+        sem_wait(buf->sem);
+        
+        trace_print_until_zero(buf);
+        
+        exit_thread = atomic_get(&buf->exit);
+    }        
+
+    // check whether there are still buffer needing to print
+    trace_print_until_zero(buf);
     
     
     if (atomic_get(&buf->level) <= TRACE_DETAIL_LEVEL)
     {
         fprintf(stderr, "\r\ntrace thread exited...\r\n");
-        fprintf(stderr, "buf->read_pos = %u, buf->write_pos = %u, buf->read_reverse = %u, buf->write_reverse = %u\r\n",
-            buf->read_pos, buf->write_pos, buf->read_reverse, buf->write_reverse);
     }
 
     return NULL;
@@ -336,11 +318,15 @@ get_timestamp_str(int level, char *buf, size_t len)
         return 0;
     
     gettimeofday(&timestamp, NULL);
-    tmTime = localtime((time_t *)&timestamp.tv_sec);
+
+    tmTime = (struct tm *)malloc(sizeof(struct tm));
+    tmTime = localtime_r((time_t *)&timestamp.tv_sec, tmTime);
     
     result = sprintf(buf, "%02d:%02d:%02d.%06ld %s ", 
         tmTime->tm_hour, tmTime->tm_min, tmTime->tm_sec, timestamp.tv_usec,
         get_level_str(level));
+
+    free(tmTime);
 
     return result;
 }

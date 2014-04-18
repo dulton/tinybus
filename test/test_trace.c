@@ -39,7 +39,7 @@ main(int argc, char **argv)
     TRACE_ADJUST_LEVEL(TRACE_DETAIL_LEVEL);
 
 
-    for (index = 0; index < 100; index++)
+    for (index = 0; index < 2; index++)
     {
         while (!feof(fp))
         {

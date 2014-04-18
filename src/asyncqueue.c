@@ -2,6 +2,7 @@
  * asyncqueue.c
  * Copyright by Zhang Shiyong, 2014. shiyong.zhang.cn@outlook.com
  */
+#include <assert.h> 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

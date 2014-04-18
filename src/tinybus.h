@@ -28,6 +28,7 @@ extern "C" {
 
 #define TINY_BUS_MSG_EXIT		0xFFFFFFFF
 
+#define BUS_MESSAGE_BASE_ID     0
 #define BUS_MESSAGE_MAX_ID		256	// base index is 0
 
 typedef struct _tiny_bus_msg_priv
@@ -106,7 +107,7 @@ typedef struct _tiny_bus
     uint32_t		msg_id_count;
 	
 	/*
-	 * contain slot_t object，here I use array to associate message ID and slot
+	 * contain slot_t objects, here I use array to associate message ID and slot
 	 * list, a message ID is a index of array actually, and it can be assocaited
 	 * with a slot list, slot subscribed message ID will be pushed into the slot
 	 * list
@@ -126,17 +127,50 @@ typedef enum
 	TINY_BUS_SUCCEED
 } tiny_bus_result_t;
 
-tiny_bus_t* tiny_bus_new(void);	// allocate a bus object
-void tiny_bus_destroy(tiny_bus_t *bus);	// destroy a bus object
+tiny_bus_t *
+tiny_bus_new(void); // allocate a bus object
 
-slot_t* slot_new(char *name, uint16_t port);
-void slot_free(slot_t *slot);
+void
+tiny_bus_destroy(tiny_bus_t *bus);  // destroy a bus object
+
+slot_t *
+slot_new(char *name, uint16_t port);
+
+void
+slot_free(slot_t *slot);
+
+message_id_t
+tiny_bus_alloc_msg_id(tiny_bus_t *bus);
+
+tiny_bus_result_t
+tiny_bus_init_msg_ids(tiny_bus_t *bus, message_id_t* ids, size_t size);
 
 tiny_bus_result_t
 slot_subscribe_message(tiny_bus_t *bus, slot_t *slot, message_id_t id);
 
-tiny_bus_result_t	slot_write(slot_t *slot, tiny_msg_t *msg);
-tiny_msg_t *		slot_read(slot_t *slot);
+void
+slot_unsubscribe_message(tiny_bus_t *bus, slot_t *slot, message_id_t id);
+
+void
+tiny_bus_free_msg_id(tiny_bus_t *bus, message_id_t id);
+
+/*
+ * module publish message into bus
+ */
+void
+slot_publish(tiny_bus_t *bus, tiny_msg_t *msg);    
+
+/*
+ * bus send message into slot's msg queue
+ */
+tiny_bus_result_t
+slot_write(slot_t *slot, tiny_msg_t *msg);
+
+/*
+ * module read message from slot's msg queue
+ */
+tiny_msg_t *
+slot_read(slot_t *slot);
 
 #ifdef __cplusplus
 }

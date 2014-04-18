@@ -24,7 +24,7 @@ do {\
 } while (0)
 
 static void
-post_message(void *node, void *data)
+bus_post_message(void *node, void *data)
 {
 	slot_t *slot;
 	tiny_msg_t *msg;
@@ -45,7 +45,7 @@ tiny_bus_deliver(tiny_bus_t *self, tiny_msg_t *msg)
 	if (self->slots[id] != NULL)
 	{
 		pthread_mutex_lock(self->mutex);
-		list_foreach(self->slots[id], post_message, msg);
+		list_foreach(self->slots[id], bus_post_message, msg);
 		pthread_mutex_unlock(self->mutex);		
 	}
 }
@@ -185,22 +185,73 @@ tiny_bus_alloc_msg_id(tiny_bus_t *bus)
 }
 
 tiny_bus_result_t
+tiny_bus_init_msg_ids(tiny_bus_t *bus, message_id_t* ids, size_t size)
+{
+    size_t index, max_size;
+	list_t *list;
+
+    max_size = sizeof(bus->slots);
+    if (size >= max_size)
+        return TINY_BUS_FAILED;
+
+    pthread_mutex_lock(bus->mutex);
+    for (index = 0; index < size; index++)
+    {
+        if (ids[index] < max_size)
+            bus->slots[ids[index]] = (list_t *)calloc(1, sizeof(list_t));
+        else
+            assert(0);
+        
+        assert(bus->slots[ids[index]]);
+    }
+    pthread_mutex_unlock(bus->mutex);
+    
+    return TINY_BUS_SUCCEED;
+}
+
+void
+tiny_bus_free_msg_id(tiny_bus_t *bus, message_id_t id)
+{
+	pthread_mutex_lock(bus->mutex);
+
+    list_free(bus->slots[id]);
+    free(bus->slots[id]);
+    bus->slots[id] = NULL;
+    
+	pthread_mutex_unlock(bus->mutex);
+
+    // Attension: here I don't run "msg_id_count--"
+    // bus->msg_id_count-- ??
+}
+
+
+tiny_bus_result_t
 slot_subscribe_message(tiny_bus_t *bus, slot_t *slot, message_id_t id)
 {
 	// this message id's slot lish must be allocated;
 	if (bus->slots[id] == NULL)
     {
-        // must allocat message id firstly.
-        
+        TRACE_ERROR("Failed to subscribe message. You must allocat message id firstly.\r\n");
         return TINY_BUS_FAILED;
     }
-
 	
 	pthread_mutex_lock(bus->mutex);
 	list_insert_tail(bus->slots[id], slot);
 	pthread_mutex_unlock(bus->mutex);
 	
 	return TINY_BUS_SUCCEED;
+}
+
+void
+slot_unsubscribe_message(tiny_bus_t *bus, slot_t *slot, message_id_t id)
+{
+    assert(bus->slots[id]);
+
+    pthread_mutex_lock(bus->mutex);
+    list_remove(bus->slots[id], slot);
+    pthread_mutex_unlock(bus->mutex);
+
+    return;
 }
 
 slot_t*
@@ -300,6 +351,9 @@ slot_free(slot_t *slot)
 	free(slot);
 }
 
+/*
+ * bus send message into slot's msg queue
+ */
 tiny_bus_result_t
 slot_write(slot_t *slot, tiny_msg_t *msg)
 {
@@ -315,6 +369,9 @@ slot_write(slot_t *slot, tiny_msg_t *msg)
 	return TINY_BUS_SUCCEED;
 }
 
+/*
+ * module read message from slot's msg queue
+ */
 tiny_msg_t *
 slot_read(slot_t *slot)
 {
@@ -330,3 +387,12 @@ slot_read(slot_t *slot)
 	
 	return msg;
 }
+
+void
+slot_publish(tiny_bus_t *bus, tiny_msg_t *msg)
+{
+    assert(bus);
+
+    async_queue_push(bus->msg_queue, msg);
+}
+
