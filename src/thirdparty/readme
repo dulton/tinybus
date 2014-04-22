@@ -1,0 +1,17 @@
+1. cprops
+   
+   description: c prototyping tools, consists of implementations for several widely 
+   used data structures and patterns, rudimentary tcp / httpd functionality and
+   a database abstraction layer.
+
+   website : http://sourceforge.net/projects/cprops/
+   svn : svn://svn.code.sf.net/p/cprops/svn/
+   in debian os, need to run "apt-get install flex bison" 
+   Compiling:
+   1) aclocal
+   2) libtoolize --force
+   3) autoconf
+   4) configure
+   5) make
+   6) make install
+
