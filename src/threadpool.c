@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
-#include "macro.h"
+#include "common.h"
 #include "threadpool.h"
 
 
@@ -11,6 +11,7 @@ thread_pool_thread_proxy(void *arg)
 {
 	thread_pool_t *tp = (thread_pool_t*)arg;
 	task_data_t *data;
+	int num;
 	
 	while ( 1 )
 	{
@@ -27,12 +28,18 @@ thread_pool_thread_proxy(void *arg)
 		}
 	}
 
-	if (atomic_dec(&tp->num_threads) == 0)
+	num = atomic_dec(&tp->num_threads);
+	if (num == 0)
 	{
 		// async queue length should be zero now
 		async_queue_destroy(tp->queue);
 		free(tp);
 	}
+
+#ifdef _THREAD_POOL_DEBUG_
+	fprintf(stderr, 
+		"Thread(%lu) has exited now, thread num is %d", pthread_self(), num);
+#endif
 		
 	return NULL;
 }
@@ -53,7 +60,7 @@ thread_pool_start_threads(thread_pool_t *tp)
 	{
 		result = pthread_create(
 			&thread, &attr, thread_pool_thread_proxy, tp);
-		posix_check_err(result, "pthread_create");
+		show_err(result, "pthread_create");
 		
 		atomic_inc(&tp->num_threads);
 

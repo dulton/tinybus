@@ -8,20 +8,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include "tinybus.h"
+#include "slot.h"
 #include "trace.h"
-
-
-#define tiny_bus_print_err(err, name) \
-do {\
-	int error = (err); 							\
-	if (error)	 		 		 			\
-		TRACE_ERROR("file %s: line %d (%s): error '%d' during '%s'",	\
-           __FILE__, __LINE__, __FUNCTION__, err, name);				\
-} while (0)
 
 static void
 bus_post_message(void *node, void *data)
@@ -165,30 +154,10 @@ tiny_bus_destroy(tiny_bus_t *bus)
 	// .. to do
 }
 
-message_id_t
-tiny_bus_alloc_msg_id(tiny_bus_t *bus)
-{
-	message_id_t id;
-	list_t   	 *list;
-	
-	id = bus->msg_id_count;
-	bus->msg_id_count++;			
-	
-	// initiate slot list for message ID
-	list = (list_t *)calloc(1, sizeof(list_t));
-	
-	pthread_mutex_lock(bus->mutex);
-	bus->slots[id] = list;
-	pthread_mutex_unlock(bus->mutex);
-	
-	return id;
-}
-
 tiny_bus_result_t
 tiny_bus_init_msg_ids(tiny_bus_t *bus, message_id_t* ids, size_t size)
 {
     size_t index, max_size;
-	list_t *list;
 
     max_size = sizeof(bus->slots);
     if (size >= max_size)
@@ -224,175 +193,4 @@ tiny_bus_free_msg_id(tiny_bus_t *bus, message_id_t id)
     // bus->msg_id_count-- ??
 }
 
-
-tiny_bus_result_t
-slot_subscribe_message(tiny_bus_t *bus, slot_t *slot, message_id_t id)
-{
-	// this message id's slot lish must be allocated;
-	if (bus->slots[id] == NULL)
-    {
-        TRACE_ERROR("Failed to subscribe message. You must allocat message id firstly.\r\n");
-        return TINY_BUS_FAILED;
-    }
-	
-	pthread_mutex_lock(bus->mutex);
-	list_insert_tail(bus->slots[id], slot);
-	pthread_mutex_unlock(bus->mutex);
-	
-	return TINY_BUS_SUCCEED;
-}
-
-void
-slot_unsubscribe_message(tiny_bus_t *bus, slot_t *slot, message_id_t id)
-{
-    assert(bus->slots[id]);
-
-    pthread_mutex_lock(bus->mutex);
-    list_remove(bus->slots[id], slot);
-    pthread_mutex_unlock(bus->mutex);
-
-    return;
-}
-
-slot_t*
-slot_new(char *name, uint16_t port)
-{
-	slot_t *slot;
-	int length, result;
-    struct sockaddr_in addr;
-    char sock_resuse = 1; 
-	
-	slot = (slot_t *)calloc(1, sizeof(slot_t));
-	if (slot == NULL)
-	{
-		tiny_bus_print_err(errno, "calloc");
-		return NULL;
-	}
-
-	slot->so = socket(AF_INET, SOCK_DGRAM, 0);
-	if (slot->so < 0)
-	{
-		tiny_bus_print_err(errno, "socket");
-		slot_free(slot);		
-		return NULL;
-	}
-
-    if (setsockopt(slot->so, SOL_SOCKET, SO_REUSEADDR, &sock_resuse, sizeof(char)) < 0)
-    {
-		tiny_bus_print_err(errno, "setsockopt");
-		slot_free(slot);		
-		return NULL;
-    }
-	
-	addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    inet_aton("127.0.0.1", &addr.sin_addr);
-	if (bind(slot->so, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-	{
-		tiny_bus_print_err(errno, "bind");
-		slot_free(slot);		
-		return NULL;
-	}
-	
-	slot->mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-	if (slot->mutex == NULL)
-	{
-		tiny_bus_print_err(errno, "malloc");
-		slot_free(slot);
-		return NULL;
-	}
-	
-	result = pthread_mutex_init(slot->mutex, NULL);
-	if (result)
-	{
-		tiny_bus_print_err(result, "pthread_mutex_init");
-		slot_free(slot);
-		return NULL;
-	}
-
-	slot->msg_queue = queue_new();
-	if (slot->msg_queue == NULL)
-	{
-		tiny_bus_print_err(errno, "queue_new");
-		slot_free(slot);
-		return NULL;
-	}
-
-	length = strlen(name);
-	length = (length < sizeof(slot->slot_name)) ? length : (sizeof(slot->slot_name) - 1);
-	strncpy(slot->slot_name, name, length);
-	    
-	return slot;
-}
-
-void
-slot_free(slot_t *slot)
-{
-	assert(slot);
-	
-	if (slot->mutex)
-	{
-		pthread_mutex_destroy(slot->mutex);
-		free(slot->mutex);	
-	}
-				
-	if (slot->msg_queue)
-		queue_free(slot->msg_queue);
-		
-	if (slot->so)
-	{
-	#ifdef WIN32
-		closesocket(slot->so);
-	#else		
-		close(slot->so);
-	#endif		
-	}
-		
-	free(slot);
-}
-
-/*
- * bus send message into slot's msg queue
- */
-tiny_bus_result_t
-slot_write(slot_t *slot, tiny_msg_t *msg)
-{
-	assert(slot);
-	assert(slot->mutex);
-	assert(slot->msg_queue);
-	assert(msg);
-	
-	pthread_mutex_lock(slot->mutex);
-	queue_push_tail(slot->msg_queue, msg);
-	pthread_mutex_unlock(slot->mutex);
-	
-	return TINY_BUS_SUCCEED;
-}
-
-/*
- * module read message from slot's msg queue
- */
-tiny_msg_t *
-slot_read(slot_t *slot)
-{
-	tiny_msg_t *msg;
-	
-	assert(slot);
-	assert(slot->mutex);
-	assert(slot->msg_queue);
-	
-	pthread_mutex_lock(slot->mutex);
-	msg = queue_pop_head(slot->msg_queue);
-	pthread_mutex_unlock(slot->mutex);
-	
-	return msg;
-}
-
-void
-slot_publish(tiny_bus_t *bus, tiny_msg_t *msg)
-{
-    assert(bus);
-
-    async_queue_push(bus->msg_queue, msg);
-}
 
