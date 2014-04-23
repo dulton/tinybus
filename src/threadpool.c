@@ -60,7 +60,7 @@ thread_pool_start_threads(thread_pool_t *tp)
 	{
 		result = pthread_create(
 			&thread, &attr, thread_pool_thread_proxy, tp);
-		show_err(result, "pthread_create");
+		show_err2(result, "pthread_create");
 		
 		atomic_inc(&tp->num_threads);
 

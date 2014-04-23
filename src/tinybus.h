@@ -27,7 +27,7 @@ typedef struct _tiny_bus_msg_priv
 	size_t		size;
 } tiny_msg_priv_t;
 
-typedef unsigned long message_id_t;
+typedef uint32_t message_id_t;
 typedef struct _tiny_bus_msg
 {
 	uint32_t		seq;
